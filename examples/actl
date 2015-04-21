@@ -3,7 +3,7 @@
 BASH_SUBCOMMAND=$HOME/src/subcommand
 source $BASH_SUBCOMMAND/subcommand
 
-HELP="Control Arduino from command line."
+declare -r HELP="Control Arduino from command line."
 declare -r VERSION="0.3"
 
 HELP_build="Builds sketch for arduino"
