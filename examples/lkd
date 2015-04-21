@@ -1,0 +1,103 @@
+#!/bin/bash
+
+BASH_SUBCOMMAND=$HOME/src/subcommand
+source $BASH_SUBCOMMAND/subcommand
+
+declare -r HELP="Linux Kernel Development Tool."
+declare -r VERSION="0.1"
+
+HELP_build_each_commit='Usage:
+build "<current_configs>" "<make_options>" <first_commit> <last_commit>
+Examples:
+build allmodconfig M=drivers/staging/cx25821 [master] [current_branch]
+build "allmodconfig allyesconfig" "-j16 M=drivers" master HEAD'
+build_each_commit()
+{
+	# process command line parameters
+	current_configs=${1-allmodconfig}
+	make_options=${2-}
+	first_commit=${3-master}
+	last_commit=${4-HEAD}
+
+	branch_name="$(git symbolic-ref HEAD 2>/dev/null)" ||
+	branch_name="(unnamed branch)"		# detached HEAD
+	branch_name=${branch_name##refs/heads/}
+	last_branch=$branch_name
+	if [ "$branch_name" == "(unnamed branch)" ]; then
+		last_branch=$(git log -1 --pretty="%H")	# save commit hash
+	fi
+
+	# main logic
+	for current_config in $current_configs; do
+		echo Config: $current_config
+		for current_commit in $(git log --reverse --pretty="%H" $first_commit..$last_commit); do
+			git checkout $current_commit 2>/dev/null
+			make O=../$current_config $make_options >/dev/null
+			if [ $? != 0 ]; then
+				echo BUILD of $current_commit FAILED.
+				echo Config: $current_config
+				echo You are currently at the failed commit.
+				return 1
+			else
+				echo Build of $current_commit successed.
+			fi
+		done
+	done
+
+	# last_branch contains either branch name or commit hash
+	git checkout $last_branch
+
+	echo .------------------.
+	echo \| BUILDS SUCCESSED \|
+	echo \`------------------\'
+
+	return 0
+}
+
+update_configs()
+{
+	# check if we are in linux directory
+	if [ ! -e Makefile ] && [ ! -d ./include/linux ] && [ ! -d ./kernel ]
+	then
+		echo ERROR: not in linux directory
+		return 1
+	fi
+
+	configs=$(ls .. | grep --invert-match "linux\|currentconfig\|localconfig")
+
+	for current_config in $configs; do
+		make O=../$current_config $current_config >/dev/null
+		echo Updated $current_config
+	done
+
+	for current_config in currentconfig localconfig; do
+		yes '' | make O=../$current_config oldconfig >/dev/null
+		echo Updated $current_config
+	done
+
+	return 0
+}
+
+update_master_branch()
+{
+	# check currently checked out branch
+	branch_name="$(git symbolic-ref HEAD 2>/dev/null)" ||
+	branch_name="(unnamed branch)"		# detached HEAD
+	branch_name=${branch_name##refs/heads/}
+	last_branch=$branch_name
+	[ "$branch_name" == "master" ] && master=1
+	# if in detached head
+	if [ "$branch_name" == "(unnamed branch)" ]; then
+		last_branch=$(git log -1 --pretty="%H")	# save commit hash
+		detached_head=1
+	fi
+
+	# only checkout and rebase if we are not in master branch
+	[ ! $master ] && git checkout master
+	git pull
+	[ ! $master ] && git checkout $last_branch
+	# only rebase if we were not in detached head
+	[ ! $master ] && [ ! $detached_head ] && git rebase master
+}
+
+subcommand "$@"
