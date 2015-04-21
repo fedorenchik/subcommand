@@ -1,0 +1,12 @@
+* all variables and functions names start with 'subcommand_' prefix,
+  except following:
+  * subcommand() function itself
+  * option variables, that start with 'opt_' prefix
+  * error variables start with prefix 'E' and success variable is named 'OK'
+  * color variables start with prefix 'COLOR_'
+  * log level variables start with prefix 'LOG_' and 'log_'
+  * function local variables does not have to have any prefix
+
+* global variables start with prefix 'subcommand_g_'
+
+* all variables are declared with 'declare' keyword

@@ -1,0 +1,46 @@
+#!/bin/bash
+
+declare COLOR_BLACK=''
+declare COLOR_RED=''
+declare COLOR_GREEN=''
+declare COLOR_YELLOW=''
+declare COLOR_BLUE=''
+declare COLOR_MAGENTA=''
+declare COLOR_CYAN=''
+declare COLOR_WHITE=''
+declare COLOR_RESET=''
+
+subcommand_color_set_scheme()
+{
+	test -n "$COLOR_RESET" && log_trace
+	declare colored_output="true"
+	case "$opt_color" in
+	always)
+		colored_output="true"
+		;;
+	never)
+		colored_output="false"
+		;;
+	auto)
+		# XXX test only stdout, but log also to stderr!!
+		# FIXME need to either test both or log to stdout only
+		if test -t 1 ; then
+			colored_output="true"
+		else
+			colored_output="false"
+		fi
+		;;
+	esac
+	if [ "$colored_output" == "true" ]; then
+		COLOR_BLACK='\e[30m'
+		COLOR_RED='\e[31m'
+		COLOR_GREEN='\e[32m'
+		COLOR_YELLOW='\e[33m'
+		COLOR_BLUE='\e[34m'
+		COLOR_MAGENTA='\e[35m'
+		COLOR_CYAN='\e[36m'
+		COLOR_WHITE='\e[37m'
+		COLOR_RESET='\e[0m'
+	fi
+	log_trace "exit"
+}

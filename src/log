@@ -1,0 +1,154 @@
+#!/bin/bash
+
+declare -r LOG_EMERG=10
+declare -r LOG_ALERT=9
+declare -r LOG_CRIT=8
+declare -r LOG_ERR=7
+declare -r LOG_WARNING=6
+declare -r LOG_NOTICE=5
+declare -r LOG_INFO=4
+declare -r LOG_DEBUG=3
+declare -r LOG_TIMER=2
+declare -r LOG_TRACE=1
+declare -r LOG_DEFAULT_FILE="$LOG_ERR $LOG_WARNING $LOG_NOTICE $LOG_INFO $LOG_TIMER"
+declare -r LOG_DEFAULT_STDOUT="$LOG_ERR $LOG_WARNING"
+declare -r LOG_DEFAULT_STDERR="$LOG_EMERG $LOG_ALERT $LOG_CRIT"
+declare subcommand_log_level4file="$LOG_DEFAULT_FILE"
+declare subcommand_log_level4stdout="$LOG_DEFAULT_STDOUT"
+declare subcommand_log_level4stderr="$LOG_DEFAULT_STDERR"
+declare log_file="/tmp/subcommand.log"
+
+subcommand_log_match_level()
+{
+	declare -r log_level_to_check="$1"
+	shift
+	declare -r log_levels="$@"
+	declare arg
+	for arg in $log_levels; do
+		if [ "$arg" -eq "$log_level_to_check" ]; then
+			return $(true)
+		fi
+	done
+	return $(false)
+}
+
+subcommand_log_match_level4file()
+{
+	subcommand_log_match_level "$1" "$subcommand_log_level4file"
+}
+
+subcommand_log_match_level4stdout()
+{
+	subcommand_log_match_level "$1" "$subcommand_log_level4stdout"
+}
+
+subcommand_log_match_level4stderr()
+{
+	subcommand_log_match_level "$1" "$subcommand_log_level4stderr"
+}
+
+log_emerg()
+{
+	declare -r message="[EMERG] $@"
+	subcommand_log_match_level4file $LOG_EMERG && echo -e "$message" >> "$log_file"
+	subcommand_log_match_level4stdout $LOG_EMERG && echo -e $COLOR_RED"$message"$COLOR_RESET
+	subcommand_log_match_level4stderr $LOG_EMERG && echo -e $COLOR_RED"$message"$COLOR_RESET >&2
+	return 0
+}
+
+log_alert()
+{
+	declare -r message="[ALERT] $@"
+	subcommand_log_match_level4file $LOG_ALERT && echo -e "$message" >> "$log_file"
+	subcommand_log_match_level4stdout $LOG_ALERT && echo -e $COLOR_RED"$message"$COLOR_RESET
+	subcommand_log_match_level4stderr $LOG_ALERT && echo -e $COLOR_RED"$message"$COLOR_RESET >&2
+	return 0
+}
+
+log_crit()
+{
+	declare -r message="[ CRIT] $@"
+	subcommand_log_match_level4file $LOG_CRIT && echo -e "$message" >> "$log_file"
+	subcommand_log_match_level4stdout $LOG_CRIT && echo -e $COLOR_RED"$message"$COLOR_RESET
+	subcommand_log_match_level4stderr $LOG_CRIT && echo -e $COLOR_RED"$message"$COLOR_RESET >&2
+	return 0
+}
+
+log_error()
+{
+	declare -r message="[ERROR] $@"
+	subcommand_log_match_level4file $LOG_ERR && echo -e "$message" >> "$log_file"
+	subcommand_log_match_level4stdout $LOG_ERR && echo -e $COLOR_RED"$message"$COLOR_RESET
+	subcommand_log_match_level4stderr $LOG_ERR && echo -e $COLOR_RED"$message"$COLOR_RESET >&2
+	return 0
+}
+
+log_warn()
+{
+	declare -r message="[ WARN] $@"
+	subcommand_log_match_level4file $LOG_WARNING && echo -e "$message" >> "$log_file"
+	subcommand_log_match_level4stdout $LOG_WARNING && echo -e $COLOR_YELLOW"$message"$COLOR_RESET
+	subcommand_log_match_level4stderr $LOG_WARNING && echo -e $COLOR_YELLOW"$message"$COLOR_RESET >&2
+	return 0
+}
+
+log_note()
+{
+	declare -r message="[ NOTE] $@"
+	subcommand_log_match_level4file $LOG_NOTICE && echo -e "$message" >> "$log_file"
+	subcommand_log_match_level4stdout $LOG_NOTICE && echo -e $COLOR_GREEN"$message"$COLOR_RESET
+	subcommand_log_match_level4stderr $LOG_NOTICE && echo -e $COLOR_GREEN"$message"$COLOR_RESET >&2
+	return 0
+}
+
+log_info()
+{
+	declare -r message="[ INFO] $@"
+	subcommand_log_match_level4file $LOG_INFO && echo -e "$message" >> "$log_file"
+	subcommand_log_match_level4stdout $LOG_INFO && echo -e $COLOR_BLUE"$message"$COLOR_RESET
+	subcommand_log_match_level4stderr $LOG_INFO && echo -e $COLOR_BLUE"$message"$COLOR_RESET >&2
+	return 0
+}
+
+log_debug()
+{
+	declare -r message="[DEBUG] $@"
+	subcommand_log_match_level4file $LOG_DEBUG && echo -e "$message" >> "$log_file"
+	subcommand_log_match_level4stdout $LOG_DEBUG && echo -e $COLOR_MAGENTA"$message"$COLOR_RESET
+	subcommand_log_match_level4stderr $LOG_DEBUG && echo -e $COLOR_MAGENTA"$message"$COLOR_RESET >&2
+	return 0
+}
+
+declare -r LOG_START_TIME="$(date +%s)"
+
+subcommand_log_timer()
+{
+	declare -r elapsed_time="$(($(date +%s)-LOG_START_TIME))"
+	declare -r message="[TIMER] $elapsed_time seconds."
+	subcommand_log_match_level4file $LOG_TIMER && echo -e "$message" >> "$log_file"
+	subcommand_log_match_level4stdout $LOG_TIMER && echo -e $COLOR_CYAN"$message"$COLOR_RESET
+	subcommand_log_match_level4stderr $LOG_TIMER && echo -e $COLOR_CYAN"$message"$COLOR_RESET >&2
+	return 0
+}
+
+subcommand_log_timer_hidden()
+{
+	declare -r elapsed_time="$(($(date +%s)-LOG_START_TIME))"
+	declare -r message="[TIMER] $elapsed_time seconds."
+	subcommand_log_match_level4file $LOG_TIMER && echo -e "$message" >> "$log_file"
+	return 0
+}
+
+log_trace()
+{
+	declare -r trace_env="$SHLVL $BASH_SUBSHELL ${#BASH_SOURCE[@]}"
+	declare -r trace_src="${BASH_SOURCE[1]} ${BASH_LINENO[0]} ${FUNCNAME[1]}"
+	# TODO: need to calculate and output right arguments
+	# TODO: declare -r trace_arg="${BASH_ARGC[0]} ${BASH_ARGV[@]}"
+	declare -r trace_arg=""
+	declare -r message="[TRACE] $trace_env $trace_src $trace_arg $@"
+	subcommand_log_match_level4file $LOG_TRACE && echo -e "$message" >> "$log_file"
+	subcommand_log_match_level4stdout $LOG_TRACE && echo -e $COLOR_CYAN"$message"$COLOR_RESET
+	subcommand_log_match_level4stderr $LOG_TRACE && echo -e $COLOR_CYAN"$message"$COLOR_RESET >&2
+	return 0
+}

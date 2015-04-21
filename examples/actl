@@ -1,0 +1,27 @@
+#!/bin/bash
+
+BASH_SUBCOMMAND=$HOME/src/subcommand
+source $BASH_SUBCOMMAND/subcommand
+
+HELP="Control Arduino from command line."
+declare -r VERSION="0.3"
+
+HELP_build="Builds sketch for arduino"
+build()
+{
+	arduino --verify --verbose --board arduino:avr:uno --port /dev/ttyACM0 "$@"
+}
+
+HELP_upload="Uploads built sketch to arduino board."
+upload()
+{
+	arduino --upload --verbose --board arduino:avr:uno --port /dev/ttyACM0 "$@"
+}
+
+HELP_serial="Starts serial communication with arduino board."
+serial()
+{
+	picocom -b 115200 /dev/ttyACM0
+}
+
+subcommand "$@"

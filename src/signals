@@ -1,0 +1,8 @@
+#!/bin/bash
+
+#trap "log_trace" DEBUG RETURN
+
+subcommand_signal_set_traced_functions()
+{
+	declare -t "run_next_command"
+}

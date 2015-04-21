@@ -1,0 +1,3 @@
+* add support to run multiple commands on one run, e.g. `comm action1 action2`
+  would run action1 and then action2
+* add example command: nsh -- non secure shell -- use ssh auto-input passwords

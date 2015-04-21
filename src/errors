@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# bash errors
+declare -r OK=0
+declare -r ERROR=1		# Catchall for general errors
+declare -r ECOMMAND=2		# Missing keyword or command
+declare -r EPERM=126		# Permission problem or not executable
+declare -r ENOTFOUND=127	# Command not found
+declare -r EINVALEXIT=128	# Invalid argument to exit
+declare -r ESIGNAL=128		# $ESIGNAL+n == exit status from signal n
+declare -r EOUTOFRANGE=255	# Exit status out of range
+
+# standard errors
+declare -r EUSAGE=64		# command line usage error
+declare -r EDATAERR=65		# Data format error
+declare -r ENOINPUT=66		# cannot open input
+declare -r ENOUSER=67		# addressee unknown
+declare -r ENOHOST=68		# host name unknown
+declare -r EUNAVAILABLE=69	# service unavailable
+declare -r ESOFTWARE=70		# internal software error
+declare -r EOSERR=71		# system error (e.g., can't fork)
+declare -r EOSFILE=72		# critical OS file missing
+declare -r ECANTCREAT=73	# can't create (user) output file
+declare -r EIOERR=74		# input/output error
+declare -r ETEMPFAIL=75		# temp failure; user is invited to retry
+declare -r EPROTOCOL=76		# remote error in protocol
+declare -r ENOPERM=77		# permission denied
+declare -r ECONFIG=78		# configuration error
+
+# custom errors
+declare -r ENOTEXIST=96		# value not found

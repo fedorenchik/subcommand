@@ -1,0 +1,112 @@
+#!/bin/bash
+
+declare -r subcommand_script_name="${BASH_SOURCE[0]}"
+declare -r subcommand_src_dir="$(dirname $(readlink --canonicalize-existing $subcommand_script_name))/src"
+
+source $subcommand_src_dir/color
+source $subcommand_src_dir/completion
+source $subcommand_src_dir/env
+source $subcommand_src_dir/errors
+source $subcommand_src_dir/log
+source $subcommand_src_dir/options
+source $subcommand_src_dir/signals
+
+subcommand()
+{
+	subcommand_color_set_scheme
+	log_trace
+	subcommand_init
+	subcommand_options_parse "$@" || subcommand_handle_error $?
+	subcommand_color_set_scheme
+	subcommand_run_next_command "${subcommand_g_params[@]}"
+	log_trace "exit"
+}
+
+subcommand_run_next_command()
+{
+	log_trace
+	log_debug "subcommand_g_next_action = $subcommand_g_next_action"
+	if [ "$opt_dry_run" = "false" ]; then
+		PS4="+ trace: "
+		[ "$opt_trace_run" = "true" ] && set -x
+		$subcommand_g_next_action "$@"
+		[ "$opt_trace_run" = "true" ] && set +x
+		PS4="+ "
+	else
+		subcommand_print_function_definition $subcommand_g_next_action
+	fi
+	log_trace "exit"
+}
+
+subcommand_print_help()
+{
+	log_trace
+	echo "$SUBCOMMAND_USAGE"
+	echo "$HELP"
+	echo "$SUBCOMMAND_STANDARD_OPTIONS"
+	echo " Available actions:"
+	declare e
+	for e in $(subcommand_custom_list_functions); do
+		echo "  $e"
+		declare var
+		eval var=\$HELP_$e
+		echo "$var"
+	done
+	log_trace "exit"
+}
+
+subcommand_print_function_definition()
+{
+	declare -f "$1" | sed -e '1,2d' -e '$d' -e 's/^    //'
+}
+
+subcommand_custom_list_functions()
+{
+	compgen -A function | grep -E -v '(^subcommand(_|$))|(^log_)'
+}
+
+subcommand_get_help_vars()
+{
+	echo "${!HELP_*}"
+}
+
+subcommand_get_opt_vars()
+{
+	echo "${!opt_*}"
+}
+
+subcommand_get_vars_by_prefix()
+{
+	compgen -A variable "$1"
+}
+
+subcommand_init()
+{
+	log_trace
+	declare -g -a g_custom_functions=($(subcommand_custom_list_functions))
+	log_debug "g_custom_functions.size = ${#g_custom_functions[@]}"
+	log_debug "g_custom_functions = ${g_custom_functions[@]}"
+	log_trace "exit"
+}
+
+subcommand_value_in_array()
+{
+	log_trace
+	log_debug "'$@'"
+	declare e
+	for e in "${@:2}"; do
+		[[ "$e" == "$1" ]] && return $OK
+	done
+	return $ENOTEXIST
+}
+
+subcommand_handle_error()
+{
+	declare err="$1"
+	case $err in
+		$EUSAGE)
+			subcommand_print_help
+			exit $EUSAGE
+			;;
+	esac
+}

@@ -1,0 +1,28 @@
+Bash Subcommand
+===============
+
+This is framework for creating subcommand-style commands.
+
+Installation
+------------
+
+To install simply clone
+git clone https://github.com/fedorenchik/subcommand.git
+
+Usage
+-----
+
+* Create the script
+
+    source ~/dir/to/subcommand
+    sub1()
+    {
+        echo "my cool subcommand 1"
+    }
+    sub2()
+    {
+        echo "second subcommand"
+    }
+    subcommand "$@"
+
+Now your script has 2 subcommands: sub1 and sub2.

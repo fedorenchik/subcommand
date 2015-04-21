@@ -1,0 +1,130 @@
+#!/bin/bash
+
+# bash options
+: ${FUNCNEST:=100}
+
+# variables with help info
+declare -r SUBCOMMAND_USAGE="Usage: $(basename $0) [<options>] [<command>] [<args>]"
+
+declare -r SUBCOMMAND_STANDARD_OPTIONS=" Options:
+  -q, --quiet, --silent      do not output almost anything
+  -v, --verbose              output almost everything
+  -d, --debug                output debug intofmation
+  --trace                    output trace information
+  -x                         run as usual + tracing of commands
+  --color[=<when>], --colour=[<when>]
+                             use colors for output, <when> can be: always,
+                             auto (default), never
+  -n, --dry-run              only print what would be done, don't actually
+                             do anything
+  -h, --help, -?, -help, help
+                             print help and exit
+  -v, --version              print version info and exit
+  --                         stop processing options, treat options after '--'
+                             as arguments to the command
+"
+
+# option variables
+declare opt_color='auto'
+declare opt_dry_run='false'
+declare opt_trace_run="false"
+
+declare -g subcommand_g_next_action
+# array for params to next action
+declare -a subcommand_g_params
+
+subcommand_options_parse()
+{
+	log_trace
+	declare current_option
+	while test $# != 0; do
+		current_option="$1"
+		log_debug "current_option = $current_option"
+		shift
+		continue_to_custom_parse="false"
+		case "$current_option" in
+			-q|--quiet|--silent)
+				subcommand_log_level4file=''
+				subcommand_log_level4stdout=''
+				subcommand_log_level4stderr="$LOG_EMERG"
+				;;
+			-v|--verbose)
+				subcommand_log_level4stdout="$subcommand_log_level4stdout $LOG_NOTICE $LOG_INFO"
+				;;
+			-d|--debug)
+				subcommand_log_level4stdout="$subcommand_log_level4stdout $LOG_DEBUG"
+				;;
+			--trace)
+				subcommand_log_level4stdout="$subcommand_log_level4stdout $LOG_TRACE"
+				;;
+			--log=*)
+				#TODO: parse log levels: -3,4-7,8,9-
+				;;
+			--color|--colour|--color=*|--colour=*)
+				opt_color=$(echo "$current_option" | cut -d'=' -f2-)
+				if [ -z "$opt_color" ]; then
+					opt_color=always
+				fi
+				case "$opt_color" in
+					auto|always|never)
+						;;
+					*)
+						parse_status=$EUSAGE
+						;;
+				esac
+				;;
+			-n|--dry-run)
+				opt_dry_run="true"
+				;;
+			-x)
+				opt_trace_run="true"
+				;;
+			-h|--help|-\?|help|-help)
+				subcommand_g_next_action='subcommand_print_help'
+				log_debug "subcommand_g_next_action = $subcommand_g_next_action"
+				log_trace "return $OK"
+				return $OK
+				;;
+			-v|--version)
+				subcommand_g_next_action='subcommand_print_version'
+				log_debug "subcommand_g_next_action = $subcommand_g_next_action"
+				log_trace "return $OK"
+				return $OK
+				;;
+			--)
+				log_debug "Stop processing options"
+				log_debug "Remaining options: $@"
+				log_debug "subcommand_g_next_action = $subcommand_g_next_action"
+				return $OK
+				;;
+			*)
+				continue_to_custom_parse="true"
+				;;
+		esac
+		if [ "$continue_to_custom_parse" = "true" ]; then
+			still_continue_parse="true"
+			subcommand_options_parse_custom "$current_option" && still_continue_parse="false"
+		fi
+		if [ "$still_continue_parse" = "true" ]; then
+			subcommand_g_params+=("$current_option")
+			#log_trace "return $EUSAGE"
+			#return $EUSAGE
+		fi
+	done
+	log_debug "remaining params: '$@'"
+	subcommand_g_params+=("$@")
+	log_trace "exit"
+}
+
+subcommand_options_parse_custom()
+{
+	log_trace
+	declare current_option="$*"
+	if subcommand_value_in_array "$current_option" "${g_custom_functions[@]}"; then
+		subcommand_g_next_action="$current_option"
+		log_trace "return $OK"
+		return $OK
+	fi
+	log_trace "return $EUSAGE"
+	return $EUSAGE
+}
