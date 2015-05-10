@@ -1,0 +1,41 @@
+#!/bin/bash
+
+source $SUBCOMMAND_INSTALL_DIR/subcommand
+
+HELP_update="Updates dev env on local machine to latest version."
+update()
+{
+	log_info "Install examples"
+	ln --force --symbolic $SUBCOMMAND_INSTALL_DIR/examples/* $HOME/bin
+	log_info "Updating Vim"
+	(
+		sudo apt-get install luajit libluajit-5.1-dev ncurses-dev
+		sudo apt-get build-dep vim
+		cd $HOME/src/vim
+		hg pull
+		hg update
+		./configure --enable-fail-if-missing --prefix=$HOME/local \
+			--with-features=huge --enable-luainterp=yes \
+			--enable-mzschemeinterp --enable-perlinterp=yes \
+			--enable-pythoninterp=yes --enable-python3interp=yes \
+			--enable-tclinterp --enable-rubyinterp=yes \
+			--enable-cscope --disable-workshop --disable-netbeans \
+			--disable-sniff --enable-multibyte --enable-gui=gnome2 \
+			--with-compiledby='Leonid V. Fedorenchik' \
+			--with-luajit \
+			--with-python-config-dir=/usr/lib/python2.7/config-i386-linux-gnu
+		make
+		make install
+		$HOME/.vim/update-bundles
+	)
+	log_info "Updating git"
+	(
+		cd $HOME/src/git
+		git checkout master
+		git pull
+		make prefix=$HOME/local
+		make prefix=$HOME/local install
+	)
+}
+
+subcommand "$@"
