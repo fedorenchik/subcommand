@@ -12,6 +12,9 @@ update()
 		sudo apt-get install luajit libluajit-5.1-dev ncurses-dev
 		sudo apt-get build-dep vim
 		cd $HOME/src/vim
+		make clean
+		make distclean
+		rm auto/config.cache
 		hg pull
 		hg update
 		./configure --enable-fail-if-missing --prefix=$HOME/local \
@@ -26,7 +29,8 @@ update()
 			--with-python-config-dir=/usr/lib/python2.7/config-i386-linux-gnu
 		make
 		make install
-		$HOME/.vim/update-bundles
+		cd $HOME/.vim
+		./update-bundles
 	)
 	log_info "Updating git"
 	(
