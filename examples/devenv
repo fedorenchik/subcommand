@@ -14,19 +14,19 @@ update()
 		cd $HOME/src/vim
 		make clean
 		make distclean
-		rm auto/config.cache
-		hg pull
-		hg update
+		rm -f auto/config.cache
+		git pull
 		./configure --enable-fail-if-missing --prefix=$HOME/local \
 			--with-features=huge --enable-luainterp=yes \
-			--enable-mzschemeinterp --enable-perlinterp=yes \
+			--disable-mzschemeinterp --enable-perlinterp=yes \
 			--enable-pythoninterp=yes --enable-python3interp=yes \
-			--enable-tclinterp --enable-rubyinterp=yes \
+			--disable-tclinterp --enable-rubyinterp=no \
 			--enable-cscope --disable-workshop --disable-netbeans \
 			--disable-sniff --enable-multibyte --enable-gui=gnome2 \
 			--with-compiledby='Leonid V. Fedorenchik' \
 			--with-luajit \
-			--with-python-config-dir=/usr/lib/python2.7/config-i386-linux-gnu
+			--with-python-config-dir=/usr/lib/python2.7/config-x86_64-linux-gnu \
+			--with-python3-config-dir=/usr/lib/python3.4/config-3.4m-x86_64-linux-gnu
 		make
 		make install
 		cd $HOME/.vim
@@ -35,7 +35,7 @@ update()
 	log_info "Updating git"
 	(
 		cd $HOME/src/git
-		git checkout master
+		git checkout maint
 		git pull
 		make prefix=$HOME/local
 		make prefix=$HOME/local install
