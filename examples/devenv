@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -e
 
 source $SUBCOMMAND_INSTALL_DIR/subcommand
 
@@ -15,7 +15,9 @@ update()
 		make clean
 		make distclean
 		rm -f auto/config.cache
-		git pull
+		git checkout master
+		git checkout -- .
+		git pull --ff-only
 		./configure --enable-fail-if-missing --prefix=$HOME/local \
 			--with-features=huge --enable-luainterp=yes \
 			--disable-mzschemeinterp --enable-perlinterp=yes \
@@ -34,9 +36,12 @@ update()
 	)
 	log_info "Updating git"
 	(
+		sudo apt-get install libcurl4-openssl-dev
 		cd $HOME/src/git
-		git checkout maint
-		git pull
+		#git checkout maint
+		git checkout master
+		git pull --ff-only
+		make clean
 		make prefix=$HOME/local
 		make prefix=$HOME/local install
 	)
